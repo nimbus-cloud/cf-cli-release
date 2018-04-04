@@ -34,9 +34,6 @@ run:
     git config --global user.email cf-cli-eng@pivotal.io
     git config --global user.name "CI Bot"
 
-    git fetch origin master:refs/remotes/origin/master
-    git rebase origin/master
-
     cat << EOF > config/private.yml
     blobstore:
       options:

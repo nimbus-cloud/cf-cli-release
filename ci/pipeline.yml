@@ -3,7 +3,7 @@ resources:
 - name: cf-cli-release
   type: git
   source:
-    uri: https://github.com/bosh-packages/cf-cli-release
+    uri: git@github.com:bosh-packages/cf-cli-release
     private_key: ((release-repo-github-key))
     branch: wip-ci
     ignore_paths:
@@ -58,6 +58,7 @@ jobs:
       - put: cf-cli-release
         params:
           repository: cf-cli-release-output
+          rebase: true
 
 
     #TODO (tv, sv) run tests/run.sh against release
