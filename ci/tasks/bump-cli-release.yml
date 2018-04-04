@@ -25,6 +25,8 @@ run:
   - |
     set -ex
 
+    CLI_VERSION=$(cat cli-binary-linux-64/version)
+
     cp -r cf-cli-release-input/. cf-cli-release-output
 
     cd cf-cli-release-output
@@ -34,8 +36,6 @@ run:
 
     git fetch origin master:refs/remotes/origin/master
     git rebase origin/master
-
-    CLI_VERSION=$(cat cli-binary-linux-64/version)
 
     cat << EOF > config/private.yml
     blobstore:
@@ -50,7 +50,8 @@ run:
     bosh add-blob ../cli-binary-linux-64/cf-cli_${CLI_VERSION}_linux_x86-64.tgz cf-cli_${CLI_VERSION}_linux_x86-64.tgz
     bosh upload-blobs
 
-    git add --all .
+    git add --all
+    git status
     git commit -m "bump cli to ${CLI_VERSION}"
 
     bosh create-release --timestamp-version --tarball=../candidate-release/cf-cli-dev-release.tgz
