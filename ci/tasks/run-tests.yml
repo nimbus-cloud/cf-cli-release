@@ -1,0 +1,27 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: cfcli/cli-base
+
+inputs:
+- name: cf-cli-release
+- name: bbl-store
+- name: bosh-lite-lock
+
+run:
+  path: bash
+  args:
+  - -c
+  - |
+    set -ex
+
+    ENV=$(cat bosh-lite-lock/name | cut -d "." -f 1)
+    pushd bbl-store/ci/infrastructure/$ENV/deployment-vars.yml
+      eval "$(bbl print-env)"
+    popd
+
+    cd cf-cli-release
+    ./tests/run.sh

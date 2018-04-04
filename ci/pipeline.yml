@@ -27,6 +27,21 @@ resources:
     secret_access_key: ((release-bucket-secret-key))
     region_name: us-west-1
 
+- name: bbl-store
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/cli-private
+    private_key: ((private-repo-github-key))
+    branch: master
+
+- name: gcp-bosh-pool
+  type: pool
+  source:
+    uri: git@github.com:cloudfoundry/cli-pools
+    private_key: ((pools-repo-github-key))
+    branch: master
+    pool: baked-potato
+
 # - name: release-version
 #   type: semver
 #   source:
@@ -60,16 +75,26 @@ jobs:
           repository: cf-cli-release-output
           rebase: true
 
+  - name: run-tests
+    serial: true
+    plan:
+    - aggregate:
+      - get: cf-cli-release
+        passed: [update-cli]
+        trigger: true
+      - get: bbl-store
+      - put: bosh-lite-lock
+        resource: gcp-bosh-pool
+        params:
+          acquire: true
+    - do:
+      - task: run-tests
+        file: cf-cli-release/ci/tasks/run-tests.yml
+    ensure:
+      put: gcp-bosh-pool
+      params:
+        release: bosh-lite-lock
 
-    #TODO (tv, sv) run tests/run.sh against release
-  # - name: run-tests
-  #   serial: true
-  #   plan: do-stuff
-  # - aggregate:
-  #   - get: cf-cli-release
-  #     passed: update-cli
-  #     trigger: true
-  #
   # - name: update-release
   #   serial: true
   #   plan:
