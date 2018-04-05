@@ -45,7 +45,7 @@ run:
         secret_access_key: "$SECRET_KEY"
     EOF
 
-      bosh remove-blob $old_blob_path
+      bosh remove-blob $OLD_BLOB_PATH
 
       bosh add-blob ../cli-binary-linux-64/cf-cli_${LATEST_CLI_VERSION}_linux_x86-64.tgz cf-cli_${LATEST_CLI_VERSION}_linux_x86-64.tgz
       bosh upload-blobs

@@ -16,12 +16,13 @@ run:
   args:
   - -c
   - |
-    set -ex
+    set -e
 
     ENV=$(cat bosh-lite-lock/name | cut -d "." -f 1)
     pushd bbl-store/ci/infrastructure/$ENV
       eval "$(bbl print-env)"
     popd
 
+    set -x
     cd cf-cli-release
     ./tests/run.sh
