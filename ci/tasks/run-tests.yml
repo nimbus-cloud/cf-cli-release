@@ -19,7 +19,7 @@ run:
     set -ex
 
     ENV=$(cat bosh-lite-lock/name | cut -d "." -f 1)
-    pushd bbl-store/ci/infrastructure/$ENV/deployment-vars.yml
+    pushd bbl-store/ci/infrastructure/$ENV
       eval "$(bbl print-env)"
     popd
 

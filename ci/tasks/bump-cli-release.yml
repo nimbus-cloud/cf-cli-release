@@ -25,30 +25,36 @@ run:
   - |
     set -ex
 
-    CLI_VERSION=$(cat cli-binary-linux-64/version)
+    LATEST_CLI_VERSION=$(cat cli-binary-linux-64/version)
 
     cp -r cf-cli-release-input/. cf-cli-release-output
 
     cd cf-cli-release-output
 
-    git config --global user.email cf-cli-eng@pivotal.io
-    git config --global user.name "CI Bot"
+    OLD_BLOB_PATH=$(bosh blobs --column=path)
+    OLD_CLI_VERSION=$(echo ${OLD_BLOB_PATH} | cut -d_ -f2)
 
-    cat << EOF > config/private.yml
+    if [[ "${OLD_CLI_VERSION}" != "${LATEST_CLI_VERSION}" ]]; then
+      git config --global user.email cf-cli-eng@pivotal.io
+      git config --global user.name "CI Bot"
+
+      cat << EOF > config/private.yml
     blobstore:
       options:
         access_key_id: "$ACCESS_KEY_ID"
         secret_access_key: "$SECRET_KEY"
     EOF
 
-    old_blob_path=$(bosh blobs --column=path)
-    bosh remove-blob $old_blob_path
+      bosh remove-blob $old_blob_path
 
-    bosh add-blob ../cli-binary-linux-64/cf-cli_${CLI_VERSION}_linux_x86-64.tgz cf-cli_${CLI_VERSION}_linux_x86-64.tgz
-    bosh upload-blobs
+      bosh add-blob ../cli-binary-linux-64/cf-cli_${LATEST_CLI_VERSION}_linux_x86-64.tgz cf-cli_${LATEST_CLI_VERSION}_linux_x86-64.tgz
+      bosh upload-blobs
 
-    git add --all
-    git status
-    git commit -m "bump cli to ${CLI_VERSION}"
+      git add --all
+      git status
+      git commit -m "bump cli to ${LATEST_CLI_VERSION}"
+    else
+      echo "Release has latest CLI version, skipping bump."
+    fi
 
     bosh create-release --timestamp-version --tarball=../candidate-release/cf-cli-dev-release.tgz
