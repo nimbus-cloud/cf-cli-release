@@ -1,5 +1,12 @@
 ---
 resources:
+- name: bbl-store
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/cli-private
+    private_key: ((private-repo-github-key))
+    branch: master
+
 - name: cf-cli-release
   type: git
   source:
@@ -10,6 +17,29 @@ resources:
       - config/*
       - releases/*
       - .final_builds/*
+
+- name: cf-cli-release-final
+  type: git
+  source:
+    uri: git@github.com:bosh-packages/cf-cli-release
+    private_key: ((release-repo-github-key))
+    branch: wip-ci
+
+- name: gh-release
+  type: github-release
+  source:
+    owner: bosh-packages
+    repository: cf-cli-release
+    access_token: ((private-repo-github-key))
+    drafts: true
+
+- name: gcp-bosh-pool
+  type: pool
+  source:
+    uri: git@github.com:cloudfoundry/cli-pools
+    private_key: ((pools-repo-github-key))
+    branch: master
+    pool: baked-potato
 
 - name: cli-binary-linux-64
   type: s3
@@ -27,31 +57,16 @@ resources:
     secret_access_key: ((release-bucket-secret-key))
     region_name: us-west-1
 
-- name: bbl-store
-  type: git
+- name: release-version
+  type: semver
   source:
-    uri: git@github.com:cloudfoundry/cli-private
-    private_key: ((private-repo-github-key))
-    branch: master
+    access_key_id: ((release-bucket-access-key-id))
+    secret_access_key: ((release-bucket-secret-key))
+    initial_version: 1.1.0
+    bucket: cf-cli-bosh-release
+    key: version
+    region_name: us-west-1
 
-- name: gcp-bosh-pool
-  type: pool
-  source:
-    uri: git@github.com:cloudfoundry/cli-pools
-    private_key: ((pools-repo-github-key))
-    branch: master
-    pool: baked-potato
-
-# - name: release-version
-#   type: semver
-#   source:
-#     access_key_id: ((release-bucket-access-key-id))
-#     secret_access_key: ((release-bucket-secret-key))
-#     initial_version: 1.0.0
-#     bucket: cf-cli-bosh-release
-#     key: version
-#     region_name: us-west-1
-#
 jobs:
   - name: update-cli
     plan:
@@ -95,25 +110,30 @@ jobs:
       params:
         release: bosh-lite-lock
 
-  # - name: update-release
-  #   serial: true
-  #   plan:
-  #     - aggregate:
-  #       - get: cf-cli-release
-  #         passed: run-tests
-  #         trigger: true
-  #       - get: cli-binary-linux-64
-  #         passed: run-tests
-  #         trigger: true
-  #       - get: release-version
-  #         params:
-  #           bump: minor
-  #       - task: update-release
-  #         path: tasks/bump-cli-release.yml
-  #         params:
-  #           ACCESS_KEY_ID: ((release-bucket-access-key-id))
-  #           SECRET_KEY: ((release-bucket-secret-key))
-  #       - put: release-version
-  #         params:
-  #           bump: minor
-  #       - put: cf-cli-release
+  - name: finalize-release
+    serial: true
+    plan:
+      - aggregate:
+        - get: cf-cli-release
+          passed: [run-tests]
+          trigger: true
+        - get: release-version
+          params:
+            bump: minor
+      - task: finalize-release
+        file: tasks/finalize-release.yml
+        params:
+          ACCESS_KEY_ID: ((release-bucket-access-key-id))
+          SECRET_KEY: ((release-bucket-secret-key))
+      - put: release-version
+        params:
+          file: release-version/version
+      - put: cf-cli-release-final
+        params:
+          repository: cf-cli-release-output
+          rebase: true
+      - put: gh-release
+        params:
+          name: release-version/version
+          tag: release-version/version
+          tag_prefix: v
