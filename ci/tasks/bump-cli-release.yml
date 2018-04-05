@@ -15,7 +15,7 @@ inputs:
 - name: cli-binary-linux-64
 
 outputs:
-  - name: candidate-release
+  - name: candidate-release-output
   - name: cf-cli-release-output
 
 run:
@@ -57,4 +57,4 @@ run:
       echo "Release has latest CLI version, skipping bump."
     fi
 
-    bosh create-release --timestamp-version --tarball=../candidate-release/cf-cli-dev-release.tgz
+    bosh create-release --timestamp-version --tarball=../candidate-release-output/cf-cli-dev-release.tgz
