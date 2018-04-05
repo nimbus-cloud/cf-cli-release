@@ -121,7 +121,7 @@ jobs:
           params:
             bump: minor
       - task: finalize-release
-        file: tasks/finalize-release.yml
+        file: cf-cli-release/ci/tasks/finalize-release.yml
         params:
           ACCESS_KEY_ID: ((release-bucket-access-key-id))
           SECRET_KEY: ((release-bucket-secret-key))
