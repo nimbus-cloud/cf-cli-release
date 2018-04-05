@@ -33,6 +33,13 @@ run:
     git config --global user.email cf-cli-eng@pivotal.io
     git config --global user.name "CI Bot"
 
+    cat << EOF > config/private.yml
+    blobstore:
+      options:
+        access_key_id: "$ACCESS_KEY_ID"
+        secret_access_key: "$SECRET_KEY"
+    EOF
+
     bosh create-release --final --version="${RELEASE_VERSION}"
 
     git add --all
